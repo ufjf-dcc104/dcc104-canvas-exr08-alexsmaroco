@@ -8,7 +8,6 @@ function Sprite(){
   this.SIZE = 16;
   this.pose = 0;
   this.frame = 0;
-  this.comida = 100;
   this.poses = [
     {row: 11, col:1, frames:8, v: 4},
     {row: 10, col:1, frames:8, v: 4},
@@ -18,11 +17,18 @@ function Sprite(){
   ];
   this.images = null;
   this.imgKey = "pc";
+  this.cooldown = 3;
+  this.bombs = [];
+  this.maxBombs = 1;
+  this.power = 3;
 }
 
 Sprite.prototype.desenhar = function (ctx) {
   this.desenharQuadrado(ctx);
   this.desenharPose(ctx);
+  for(var i = 0; i < this.bombs.length; i++) {
+	   this.bombs[i].desenharBomba(ctx);
+  }
 }
 
 Sprite.prototype.desenharQuadrado = function (ctx) {
@@ -49,9 +55,30 @@ Sprite.prototype.desenharPose = function (ctx) {
   ctx.restore();
 };
 
+Sprite.prototype.desenharBomba = function(ctx) {
+	ctx.save();
+	ctx.translate(this.x, this.y);
+	ctx.beginPath();
+	ctx.arc(0, 0, this.w/2, 0, 2*Math.PI);
+	ctx.fill();
+	ctx.closePath();
+	ctx.restore();
+}
+
 
 
 Sprite.prototype.mover = function (map, dt) {
+  this.cooldown-=dt;
+  
+	// countdown das bombas
+	for (var i = this.bombs.length-1;i>=0; i--) {
+		this.bombs[i].timer-=dt;
+		if(this.bombs[i].timer < 0) {
+			this.bombs[i].explodir(map);
+			this.bombs.splice(i, 1);
+		}
+	}
+  
   this.gx = Math.floor(this.x/map.SIZE);
   this.gy = Math.floor(this.y/map.SIZE);
   
@@ -82,4 +109,69 @@ Sprite.prototype.mover = function (map, dt) {
   
 };
 
+Sprite.prototype.dropBomb = function(map) {
+	if(this.cooldown < 0 && this.bombs.length < this.maxBombs) {
+		var bomb = new Sprite();
+		// centraliza no grid
+		bomb.x = Math.floor(this.x/map.SIZE)*map.SIZE + map.SIZE/2;
+		bomb.y = Math.floor(this.y/map.SIZE)*map.SIZE + map.SIZE/2;
+		bomb.w = 20;
+		bomb.h = 20;
+		bomb.timer = 2;
+		bomb.power = this.power;
+		this.bombs.push(bomb);
+		this.cooldown = 1;
+		//this.bombs++;
+	}
+}
 
+Sprite.prototype.explodir = function(map) {
+	var gx = Math.floor(this.x/map.SIZE);
+	var gy = Math.floor(this.y/map.SIZE);
+	var destruir1 = true;
+	var destruir2 = true;
+	var destruir3 = true;
+	var destruir4 = true;
+	for(var i = 1; i <= this.power; i++) {
+		if(gy-i >= 0) {
+			// para de destruir ao encontrar parede
+			if(map.cells[gy-i][gx] == 1) {
+				destruir1 = false;
+			}
+			if(destruir1 && map.cells[gy-i][gx] == 2) {
+				map.cells[gy-i][gx] = 0;
+			}
+		}
+		if(gy+i < map.cells.length) {
+			// para de destruir ao encontrar parede
+			if(map.cells[gy+i][gx] == 1) {
+				destruir2 = false;
+			}
+			if(destruir2 && map.cells[gy+i][gx] == 2) {
+				map.cells[gy+i][gx] = 0;
+			}
+		}
+		if(gx-i >= 0) {
+			console.log(gy + " " + (gx-i) + " " + destruir3);
+			// para de destruir ao encontrar parede
+			if(map.cells[gy][gx-i] == 1) {
+				destruir3 = false;
+			}
+			if(destruir3 && map.cells[gy][gx-i] == 2) {
+				map.cells[gy][gx-i] = 0;
+			}
+		}
+		if(gx+i < map.cells[0].length) {
+			console.log(gy + " " + (gx+i) + " " + destruir4);
+			// para de destruir ao encontrar parede
+			if(map.cells[gy][gx+i] == 1) {
+				destruir4 = false;
+			}
+			if(destruir4 && map.cells[gy][gx+i] == 2) {
+				map.cells[gy][gx+i] = 0;
+			}
+		}
+	}
+	
+	console.log("fim\n");
+}
