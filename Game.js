@@ -59,7 +59,6 @@ function passo(t){
   if(!this.fim) {
 		pc1.mover(map, dt);
 		pc2.mover(map, dt);
-		map.mover(dt);
 	}
 	map.desenhar(ctx);
 	pc1.desenhar(ctx);
@@ -93,7 +92,7 @@ function initControls(){
 
 		// player 1
 	  case 32:
-		//pc1.dropBomb(map,dt);
+		pc1.dropBomb(map);
 		break;
 	  case 65:
         pc1.vx = -100;
@@ -122,7 +121,7 @@ function initControls(){
 	
 		// player 2
 	  case 13:
-		//pc2.dropBomb(map,dt);
+		pc2.dropBomb(map);
 		break;
       case 37:
 		pc2.vx = -100;
