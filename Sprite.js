@@ -17,10 +17,10 @@ function Sprite(){
   ];
   this.images = null;
   this.imgKey = "pc";
-  this.cooldown = 3;
+  this.cooldown = 1;
   this.bombs = [];
   this.maxBombs = 1;
-  this.power = 3;
+  this.power = 1;
 }
 
 Sprite.prototype.desenhar = function (ctx) {
@@ -66,36 +66,46 @@ Sprite.prototype.desenharBomba = function(ctx) {
 }
 
 
+Sprite.prototype.desenhaExplosao = function(x,y) {
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.fillStyle = "black";
+		ctx.beginPath();
+		ctx.arc(0, 0, 10, 0, 2*Math.PI);
+		ctx.fill();
+		ctx.closePath();
+		ctx.restore();
+}
 
 Sprite.prototype.mover = function (map, dt) {
   this.cooldown-=dt;
-  
+  /*
 	// countdown das bombas
 	for (var i = this.bombs.length-1;i>=0; i--) {
 		this.bombs[i].timer-=dt;
 		if(this.bombs[i].timer < 0) {
-			this.bombs[i].explodir(map);
+			this.bombs[i].explodir(this, map, dt);
 			this.bombs.splice(i, 1);
 		}
 	}
-  
+  */
   this.gx = Math.floor(this.x/map.SIZE);
   this.gy = Math.floor(this.y/map.SIZE);
   
-  if(this.vx>0 && map.cells[this.gy][this.gx+1]==1 || map.cells[this.gy][this.gx+1]==2){
+  if(this.vx>0 && map.cells[this.gy][this.gx+1]==1 || map.cells[this.gy][this.gx+1]==2 || map.cells[this.gy][this.gx+1]==3){
     this.x += Math.min((this.gx+1)*map.SIZE - (this.x+this.SIZE/2),this.vx*dt);
 	
-  } else if(this.vx <0 && map.cells[this.gy][this.gx-1]==1 || map.cells[this.gy][this.gx-1]==2){
+  } else if(this.vx <0 && map.cells[this.gy][this.gx-1]==1 || map.cells[this.gy][this.gx-1]==2 || map.cells[this.gy][this.gx-1]==3){
       this.x += Math.max((this.gx)*map.SIZE - (this.x-this.SIZE/2),this.vx*dt);
 
 	}
   else {
     this.x = this.x + this.vx*dt;
   }
-  if(this.vy >0 && map.cells[this.gy+1][this.gx]==1 || map.cells[this.gy+1][this.gx]==2){
+  if(this.vy >0 && map.cells[this.gy+1][this.gx]==1 || map.cells[this.gy+1][this.gx]==2 || map.cells[this.gy+1][this.gx]==3){
     this.y += Math.min((this.gy+1)*map.SIZE - (this.y+this.SIZE/2),this.vy*dt);
 
-  } else if( this.vy<0 && map.cells[this.gy-1][this.gx]==1 || map.cells[this.gy-1][this.gx]==2){
+  } else if( this.vy<0 && map.cells[this.gy-1][this.gx]==1 || map.cells[this.gy-1][this.gx]==2 || map.cells[this.gy-1][this.gx]==3){
       this.y += Math.max((this.gy)*map.SIZE - (this.y-this.SIZE/2),this.vy*dt);
 	}
 	
@@ -115,23 +125,27 @@ Sprite.prototype.dropBomb = function(map) {
 		// centraliza no grid
 		bomb.x = Math.floor(this.x/map.SIZE)*map.SIZE + map.SIZE/2;
 		bomb.y = Math.floor(this.y/map.SIZE)*map.SIZE + map.SIZE/2;
+		// nao deixa atravessar bombas !! faz personagem bugar e atravessar paredes !!
+		//map.cells[Math.floor(this.y/map.SIZE)][Math.floor(this.x/map.SIZE)] = 3;
 		bomb.w = 20;
 		bomb.h = 20;
 		bomb.timer = 2;
 		bomb.power = this.power;
 		this.bombs.push(bomb);
 		this.cooldown = 1;
-		//this.bombs++;
 	}
 }
 
-Sprite.prototype.explodir = function(map) {
+/*
+Sprite.prototype.explodir = function(pc, map, dt) {
+	console.log(pc);
 	var gx = Math.floor(this.x/map.SIZE);
 	var gy = Math.floor(this.y/map.SIZE);
 	var destruir1 = true;
 	var destruir2 = true;
 	var destruir3 = true;
 	var destruir4 = true;
+	
 	for(var i = 1; i <= this.power; i++) {
 		if(gy-i >= 0) {
 			// para de destruir ao encontrar parede
@@ -140,6 +154,13 @@ Sprite.prototype.explodir = function(map) {
 			}
 			if(destruir1 && map.cells[gy-i][gx] == 2) {
 				map.cells[gy-i][gx] = 0;
+				destruir1 = false;
+			}
+			if(destruir1 && pc.gx == gx && pc.gy == gy-i) {
+				console.log("atingiu player");
+			}
+			if(destruir1) {
+				this.desenhaExplosao(this.x, (gy-i)*map.SIZE+map.SIZE/2);
 			}
 		}
 		if(gy+i < map.cells.length) {
@@ -149,29 +170,47 @@ Sprite.prototype.explodir = function(map) {
 			}
 			if(destruir2 && map.cells[gy+i][gx] == 2) {
 				map.cells[gy+i][gx] = 0;
+				destruir2 = false;
+			}
+			if(destruir2 && pc.gx == gx && pc.gy == gy+i) {
+				console.log("atingiu player");
+			}
+			if(destruir2) {
+				this.desenhaExplosao(this.x, (gy+i)*map.SIZE+map.SIZE/2);
 			}
 		}
 		if(gx-i >= 0) {
-			console.log(gy + " " + (gx-i) + " " + destruir3);
 			// para de destruir ao encontrar parede
 			if(map.cells[gy][gx-i] == 1) {
 				destruir3 = false;
 			}
 			if(destruir3 && map.cells[gy][gx-i] == 2) {
 				map.cells[gy][gx-i] = 0;
+				destruir3 = false;
+			}
+			if(destruir3 && pc.gx == gx-i && pc.gy == gy) {
+				console.log("atingiu player");
+			}
+			if(destruir3) {
+				this.desenhaExplosao((gx-i)*map.SIZE+map.SIZE/2, this.y);
 			}
 		}
 		if(gx+i < map.cells[0].length) {
-			console.log(gy + " " + (gx+i) + " " + destruir4);
 			// para de destruir ao encontrar parede
 			if(map.cells[gy][gx+i] == 1) {
 				destruir4 = false;
 			}
 			if(destruir4 && map.cells[gy][gx+i] == 2) {
 				map.cells[gy][gx+i] = 0;
+				destruir4 = false;
+			}
+			if(destruir4 && pc.gx == gx+i && pc.gy == gy) {
+				console.log("atingiu player");
+			}
+			if(destruir4) {
+				this.desenhaExplosao((gx+i)*map.SIZE+map.SIZE/2, this.y);
 			}
 		}
 	}
-	
-	console.log("fim\n");
 }
+*/

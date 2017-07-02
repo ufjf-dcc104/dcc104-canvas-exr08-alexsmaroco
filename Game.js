@@ -57,15 +57,138 @@ function passo(t){
   requestAnimationFrame(passo);
   ctx.clearRect(0,0, canvas.width, canvas.height);
   if(!this.fim) {
+		// countdown das bombas
+		for (var i = pc1.bombs.length-1;i>=0; i--) {
+			pc1.bombs[i].timer-=dt;
+			if(pc1.bombs[i].timer < 0) {
+				explodir(pc1.bombs[i], map, dt);
+				pc1.bombs.splice(i, 1);
+			}
+		}
+		for (var i = pc2.bombs.length-1;i>=0; i--) {
+			pc2.bombs[i].timer-=dt;
+			if(pc2.bombs[i].timer < 0) {
+				explodir(pc2.bombs[i], map, dt);
+				pc2.bombs.splice(i, 1);
+			}
+		}
+		
 		pc1.mover(map, dt);
 		pc2.mover(map, dt);
+		
 	}
+
 	map.desenhar(ctx);
 	pc1.desenhar(ctx);
 	pc2.desenhar(ctx);
     desenhaInfo(ctx);
 	anterior = t;
 }
+
+
+
+function explodir(bomb, map, dt) {
+	var gx = Math.floor(bomb.x/map.SIZE);
+	var gy = Math.floor(bomb.y/map.SIZE);
+	var destruir1 = true;
+	var destruir2 = true;
+	var destruir3 = true;
+	var destruir4 = true;
+	
+	// tira bomba do grid
+	map.cells[gy][gx] = 0;
+	
+	// caso fique em cima da bomba
+	if(pc1.gx == gx && pc1.gy == gy) {
+		console.log("atingiu player 1");
+	}
+	if(pc2.gx == gx && pc2.gy == gy) {
+		console.log("atingiu player 2");
+	}
+	
+	for(var i = 1; i <= bomb.power; i++) {
+		if(gy-i >= 0) {
+			// para de destruir ao encontrar parede
+			if(map.cells[gy-i][gx] == 1) {
+				destruir1 = false;
+			}
+			if(destruir1 && map.cells[gy-i][gx] == 2) {
+				map.cells[gy-i][gx] = 0;
+				destruir1 = false;
+			}
+			if(destruir1 && pc1.gx == gx && pc1.gy == gy-i) {
+				console.log("atingiu player 1");
+			}
+			if(destruir1 && pc2.gx == gx && pc2.gy == gy-i) {
+				console.log("atingiu player 2");
+			}
+			if(destruir1) {
+				bomb.desenhaExplosao(bomb.x, (gy-i)*map.SIZE+map.SIZE/2);
+			}
+		}
+		if(gy+i < map.cells.length) {
+			// para de destruir ao encontrar parede
+			if(map.cells[gy+i][gx] == 1) {
+				destruir2 = false;
+			}
+			if(destruir2 && map.cells[gy+i][gx] == 2) {
+				map.cells[gy+i][gx] = 0;
+				destruir2 = false;
+			}
+			if(destruir2 && pc1.gx == gx && pc1.gy == gy+i) {
+				console.log("atingiu player 1");
+			}
+			if(destruir2 && pc2.gx == gx && pc2.gy == gy+i) {
+				console.log("atingiu player 2");
+			}
+			if(destruir2) {
+				bomb.desenhaExplosao(bomb.x, (gy+i)*map.SIZE+map.SIZE/2);
+			}
+		}
+		if(gx-i >= 0) {
+			// para de destruir ao encontrar parede
+			if(map.cells[gy][gx-i] == 1) {
+				destruir3 = false;
+			}
+			if(destruir3 && map.cells[gy][gx-i] == 2) {
+				map.cells[gy][gx-i] = 0;
+				destruir3 = false;
+			}
+			if(destruir3 && pc1.gx == gx-i && pc1.gy == gy) {
+				console.log("atingiu player 1");
+			}
+			if(destruir3 && pc2.gx == gx-i && pc2.gy == gy) {
+				console.log("atingiu player 2");
+			}
+			if(destruir3) {
+				bomb.desenhaExplosao((gx-i)*map.SIZE+map.SIZE/2, bomb.y);
+			}
+		}
+		if(gx+i < map.cells[0].length) {
+			// para de destruir ao encontrar parede
+			if(map.cells[gy][gx+i] == 1) {
+				destruir4 = false;
+			}
+			if(destruir4 && map.cells[gy][gx+i] == 2) {
+				map.cells[gy][gx+i] = 0;
+				destruir4 = false;
+			}
+			if(destruir4 && pc1.gx == gx+i && pc1.gy == gy) {
+				console.log("atingiu player 1");
+			}
+			if(destruir4 && pc2.gx == gx+i && pc2.gy == gy) {
+				console.log("atingiu player 2");
+			}
+			if(destruir4) {
+				bomb.desenhaExplosao((gx+i)*map.SIZE+map.SIZE/2, bomb.y);
+			}
+		}
+	}
+}
+
+
+
+
 
 function desenhaInfo(ctx) {
   ctx.font = "15px Arial";
