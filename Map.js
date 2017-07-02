@@ -1,7 +1,6 @@
 function Map(rows, collumns) {
   this.SIZE = 40;
   this.cells = [];
-  this.shots = [];
   for (var r = 0; r < rows; r++) {
     this.cells[r] = [];
     for (var c = 0; c < collumns; c++) {
@@ -23,9 +22,6 @@ Map.prototype.desenhar = function (ctx) {
 	  }
     }
   }
-  for(var i = 0; i < this.shots.length; i++) {
-	   this.shots[i].desenharTiro(ctx);
-  }
 };
 
 Map.prototype.setCells = function (newCells) {
@@ -45,16 +41,5 @@ Map.prototype.setCells = function (newCells) {
   }
 };
 
-Map.prototype.mover = function (dt) {
-  for (var i = this.shots.length-1;i>=0; i--) {
-      this.shots[i].moverAng(dt);
 
-      var gx = Math.floor(this.shots[i].x/map.SIZE);
-      var gy = Math.floor(this.shots[i].y/map.SIZE);
-      if(this.cells[gy][gx] == 1) {
-        this.shots.splice(i, 1);
-      }
-
-    }
-};
 
